@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ipa-viewer</title>
+<title>IPA Viewer</title>
 <style>
 body { font-family: sans-serif; background:#f5f5f5; color:#222; margin:0; padding:0;}
 header { background:#222; color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;}
 h1 { margin:0; font-size:1.5em; }
-.container { padding:20px; }
-.repo-toggle, .search-box { margin-bottom:15px; }
-.repo-toggle label { margin-right:15px; cursor:pointer; }
+.container { padding:20px; transition: margin-left 0.3s; }
+.search-box { margin-bottom:15px; }
 .app { display:flex; align-items:center; background:#fff; padding:10px 15px; margin-bottom:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.2);}
 .app img { width:60px; height:60px; border-radius:12px; margin-right:15px; object-fit:cover; }
 .app .info { flex:1; }
@@ -19,26 +18,45 @@ button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; c
 button:hover { background:#0056b3; }
 input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
 #error { color:red; font-weight:bold; margin-bottom:15px; white-space: pre-wrap; }
+
+/* Modal */
 .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
 .modal-content { background:#fff; padding:20px; border-radius:10px; max-width:600px; max-height:80%; overflow:auto; }
 .modal img { max-width:500px; height:auto; margin-bottom:10px; border-radius:8px; display:block; }
 .modal-close { float:right; cursor:pointer; font-weight:bold; color:#333; }
+
+/* Sidebar menu */
+#sidebar { height:100%; width:0; position:fixed; z-index:1100; top:0; left:0; background:#222; overflow-x:hidden; transition:0.3s; padding-top:60px; color:#fff; }
+#sidebar h2 { padding-left:20px; }
+#sidebar label { display:block; padding:5px 20px; cursor:pointer; }
+#sidebar input { margin-right:8px; }
+#sidebarClose { position:absolute; top:10px; right:15px; font-size:25px; cursor:pointer; }
+
+/* JSON Viewer */
+#jsonViewer { white-space:pre-wrap; background:#eee; padding:10px; border-radius:8px; margin-top:10px; max-height:300px; overflow:auto; }
 </style>
 </head>
 <body>
 <header>
-<h1>ipa-viewer</h1>
+<h1>IPA Viewer</h1>
 <div class="search-box">
-<input type="text" id="searchInput" placeholder="アプリ名で検索">
+<input type="text" id="searchInput" placeholder="Search apps">
+<button onclick="openSidebar()">☰ Settings</button>
 </div>
 </header>
+
+<div id="sidebar">
+<span id="sidebarClose" onclick="closeSidebar()">✖</span>
+<h2>Repositories</h2>
+<div id="repoToggles"></div>
+</div>
+
 <div class="container">
 <div id="error"></div>
-<div id="repoToggles" class="repo-toggle"></div>
 <div id="apps"></div>
 </div>
 
-<!-- モーダル -->
+<!-- Modal for app details -->
 <div id="modal" class="modal">
 <div class="modal-content">
 <span id="modalClose" class="modal-close">✖</span>
@@ -51,173 +69,157 @@ const repoUrls = [
   "https://ipa.cypwn.xyz/cypwn.json",
   "https://wuxu1.github.io/wuxu-complete.json",
   "https://wuxu1.github.io/wuxu-complete-plus.json",
-  "https://quarksources.github.io/dist/quantumsource.min.json",
-  "https://quarksources.github.io/dist/quantumsource%2B%2B.min.json",
-  "https://community-apps.sidestore.io/sidecommunity.json",
-  "https://raw.githubusercontent.com/LiveContainer/LiveContainer/refs/heads/main/apps.json",
-  "https://github.com/LiveContainer/LiveContainer/releases/download/nightly/apps_nightly.json",
-  "https://stikdebug.xyz/index.json",
-  "https://raw.githubusercontent.com/MaxCrazy1101/MeloNXStoreSource/refs/heads/main/MeloNX.json",
-  "https://provenance-emu.com/apps.json",
-  "https://neoarz.github.io/Countdown-App/Countdown.json",
-  "https://altstore.oatmealdome.me/",
-  "https://alt.getutm.app/",
-  "https://theodyssey.dev/altstore/odysseysource.json",
-  "https://repos.yattee.stream/alt/apps.json",
-  "https://cdn.altstore.io/file/altstore/marketplace.json",
-  "https://i.cizzuk.net/altstore/source.pal.json",
-  "https://eichi.yyyywaiwai.com/source.json",
-  "https://raw.githubusercontent.com/totallynotharry/epic-games-altstore/refs/heads/main/source.json",
-  "https://app.bmverse.bruu.eu/",
-  "https://appfair.net/altstore.json",
-  "http://blissquake.net/AltStore/source",
-  "https://raw.githubusercontent.com/Michael-128/qBitControl-releases/main/source.json",
-  "https://altstore.getnickel.site/",
-  "https://partyknights.app/source",
-  "https://esound.app/downloads/source.json",
-  "https://polymorph-distribution.netlify.app/source.json",
-  "https://raw.githubusercontent.com/RajnishOne/qbitconnect-releases/main/altstore-pal.json",
-  "https://cdn.squadblast.com/market/marketplace.json",
-  "https://weztling.se/altstore.json",
-  "https://alt.hackerwebapp.com/PALSource.json",
-  "https://courtpredict-ios.web.app/PALSource.json",
-  "https://xitrix.github.io/iTorrent/AltStoreEU.json",
-  "https://altstore.nuumi.io/source.json",
-  "https://vvpapps.b-cdn.net/source.json",
-  "https://bringyour.com/altstore/source.json",
-  "https://www.cranci.tech/PAL.json",
-  "https://alt.stux.me/repo.json",
-  "https://peopledrop.app/apps.json",
-  "https://adp.salupovteam.com/altrepo.json",
-  "https://alt.mexc.co/",
-  "https://raw.githubusercontent.com/cbruegg/altstore-source/refs/heads/main/source.json"
-]
+  "https://quarksources.github.io/dist/quantumsource.min.json"
+  // add more if needed
+];
 
 const corsProxy = "https://corsproxy.io/?url=";
 let reposData = [];
 let enabledRepos = {};
 
-// repo ON/OFF
+// Sidebar open/close
+function openSidebar(){ document.getElementById('sidebar').style.width='300px'; document.querySelector('.container').style.marginLeft='300px'; }
+function closeSidebar(){ document.getElementById('sidebar').style.width='0'; document.querySelector('.container').style.marginLeft='0'; }
+
+// Repo toggles
 function createRepoToggles() {
   const container = document.getElementById('repoToggles');
   container.innerHTML = '';
-  reposData.forEach(repo => {
+  reposData.forEach(repo=>{
     const id = repo.name || repo.identifier || "unknown";
     enabledRepos[id] = true;
     const label = document.createElement('label');
     const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = true;
-    cb.onchange = () => { enabledRepos[id] = cb.checked; renderApps(); };
+    cb.type='checkbox';
+    cb.checked=true;
+    cb.onchange = ()=>{ enabledRepos[id] = cb.checked; renderApps(); };
     label.appendChild(cb);
     label.appendChild(document.createTextNode(' ' + id));
     container.appendChild(label);
   });
 }
 
-// アプリ描画
+// Render apps
 function renderApps() {
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
   const appsDiv = document.getElementById('apps');
-  appsDiv.innerHTML = '';
-  reposData.forEach(repo => {
+  appsDiv.innerHTML='';
+  reposData.forEach(repo=>{
     const repoId = repo.name || repo.identifier || "unknown";
     if(!enabledRepos[repoId]) return;
-
-    const apps = Array.isArray(repo.apps) ? repo.apps : Object.values(repo.apps || {});
-    apps.forEach(app => {
+    const apps = Array.isArray(repo.apps) ? repo.apps : Object.values(repo.apps||{});
+    apps.forEach(app=>{
       if(searchTerm && !(app.name && app.name.toLowerCase().includes(searchTerm))) return;
-
       const appDiv = document.createElement('div');
-      appDiv.className = 'app';
+      appDiv.className='app';
 
-      const img = document.createElement('img');
-      img.src = app.iconURL ? corsProxy + app.iconURL : '';
-      img.alt = app.name || 'app icon';
+      const img=document.createElement('img');
+      img.src=app.iconURL?corsProxy+app.iconURL:'';
+      img.alt=app.name||'app icon';
       appDiv.appendChild(img);
 
-      const info = document.createElement('div');
-      info.className = 'info';
-      const title = document.createElement('h2');
-      title.textContent = app.name || app.bundleIdentifier || 'Unknown App';
+      const info=document.createElement('div');
+      info.className='info';
+      const title=document.createElement('h2');
+      title.textContent=app.name||app.bundleIdentifier||'Unknown App';
       info.appendChild(title);
 
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = `Version: ${app.version || 'N/A'} | Updated: ${app.versionDate || 'N/A'} | Developer: ${app.developerName || 'N/A'}`;
+      const meta=document.createElement('div');
+      meta.className='meta';
+      meta.textContent=`Version: ${app.version||'N/A'} | Updated: ${app.versionDate||'N/A'} | Developer: ${app.developerName||'N/A'}`;
       info.appendChild(meta);
 
       appDiv.appendChild(info);
 
-      // ボタン群
+      // Buttons
       if(app.downloadURL){
-        const btn = document.createElement('button');
-        btn.textContent = 'Download IPA';
-        btn.onclick = () => window.open(corsProxy + app.downloadURL, '_blank');
+        const btn=document.createElement('button');
+        btn.textContent='Download IPA';
+        btn.onclick=()=>window.open(corsProxy+app.downloadURL,'_blank');
         appDiv.appendChild(btn);
       }
 
       if(app.localizedDescription || (app.screenshotURLs && app.screenshotURLs.length)){
-        const btnDetail = document.createElement('button');
-        btnDetail.textContent = '詳細';
-        btnDetail.onclick = () => openModal(app);
+        const btnDetail=document.createElement('button');
+        btnDetail.textContent='Details';
+        btnDetail.onclick=()=>openModal(app);
         appDiv.appendChild(btnDetail);
       }
+
+      // Source JSON button
+      const btnSource=document.createElement('button');
+      btnSource.textContent='Source';
+      btnSource.onclick=()=>showSourceJSON(app);
+      appDiv.appendChild(btnSource);
 
       appsDiv.appendChild(appDiv);
     });
   });
 }
 
-// モーダル制御
+// Modal
 const modal = document.getElementById('modal');
 const modalBody = document.getElementById('modalBody');
-document.getElementById('modalClose').onclick = () => { modal.style.display='none'; };
+document.getElementById('modalClose').onclick=()=>{modal.style.display='none';};
 
 function openModal(app){
-  modalBody.innerHTML = '';
+  modalBody.innerHTML='';
   if(app.localizedDescription){
-    const p = document.createElement('p');
-    p.textContent = app.localizedDescription;
+    const p=document.createElement('p');
+    p.textContent=app.localizedDescription;
     modalBody.appendChild(p);
   }
   if(app.screenshotURLs && app.screenshotURLs.length){
     app.screenshotURLs.forEach(url=>{
-      const img = document.createElement('img');
-      img.src = corsProxy + url;
+      const img=document.createElement('img');
+      img.src=corsProxy+url;
       modalBody.appendChild(img);
     });
   }
-  modal.style.display = 'flex';
+  modal.style.display='flex';
 }
 
-// JSON fetch
-async function fetchRepos() {
-  reposData = [];
-  let success = false;
-  let errorMessages = [];
+// Show source JSON without proxy
+function showSourceJSON(app){
+  modalBody.innerHTML='';
+  let jsonStr = JSON.stringify(app, null, 2);
+  const pre = document.createElement('pre');
+  pre.id='jsonViewer';
+  pre.textContent=jsonStr;
+  modalBody.appendChild(pre);
+
+  const copyBtn=document.createElement('button');
+  copyBtn.textContent='Copy JSON';
+  copyBtn.onclick=()=>{ navigator.clipboard.writeText(jsonStr); alert('Copied!'); };
+  modalBody.appendChild(copyBtn);
+
+  modal.style.display='flex';
+}
+
+// Fetch repos
+async function fetchRepos(){
+  reposData=[];
+  let success=false;
+  let errorMessages=[];
   for(const url of repoUrls){
     try{
-      const res = await fetch(corsProxy + url);
+      const res=await fetch(corsProxy+url);
       if(!res.ok){
         errorMessages.push(`Failed to fetch: ${url} (status ${res.status})`);
         continue;
       }
-      const data = await res.json();
+      const data=await res.json();
       reposData.push(data);
-      success = true;
-    } catch(e){
-      console.error('Error fetching:', url, e);
+      success=true;
+    }catch(e){
+      console.error('Error fetching:',url,e);
       errorMessages.push(`Error fetching: ${url}\n${e.message}`);
     }
   }
 
-  const errorDiv = document.getElementById('error');
-  if(!success){
-    errorDiv.textContent = "JSONを読み込めませんでした。\n" + errorMessages.join("\n");
-  } else {
-    errorDiv.textContent = "";
-  }
+  const errorDiv=document.getElementById('error');
+  if(!success){ errorDiv.textContent="Failed to load JSON.\n"+errorMessages.join("\n"); }
+  else{ errorDiv.textContent=''; }
 
   createRepoToggles();
   renderApps();
