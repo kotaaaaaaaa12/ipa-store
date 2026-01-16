@@ -1,1 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repo Store</title>
 
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f2f2f7;
+}
+
+header {
+  background: #fff;
+  padding: 14px;
+  font-size: 20px;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+}
+
+#container {
+  display: flex;
+}
+
+#repos {
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+.repo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.repo input {
+  transform: scale(1.2);
+}
+
+#apps {
+  flex: 1;
+  padding: 10px;
+}
+
+.app {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.app img {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  margin-right: 14px;
+}
+
+.info {
+  flex: 1;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 13px;
+  color: #666;
+}
+
+.desc {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.get {
+  background: #007aff;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<header>Repo Store</header>
+
+<div id="container">
+  <div id="repos">
+    <b>Repo管理</b>
+    <div id="repoList">読み込み中…</div>
+  </div>
+  <div id="apps"></div>
+</div>
+
+<script>
+const repoUrls = [
+  "https://eichi.yyyywaiwai.com/source.json"
+  // ここに好きなrepo追加
+];
+
+let repos = [];
+let enabledRepos = {};
+
+Promise.all(
+  repoUrls.map(url =>
+    fetch(url).then(r => r.json())
+  )
+).then(data => {
+  repos = data;
+  data.forEach(r => enabledRepos[r.name] = true);
+  drawRepoList();
+  drawApps();
+}).catch(() => {
+  document.getElementById("apps").textContent = "repo読み込み失敗や";
+});
+
+function drawRepoList() {
+  const list = document.getElementById("repoList");
+  list.innerHTML = "";
+  repos.forEach(repo => {
+    const div = document.createElement("div");
+    div.className = "repo";
+
+    const label = document.createElement("span");
+    label.textContent = repo.name || "Unknown";
+
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = enabledRepos[repo.name];
+    check.onchange = () => {
+      enabledRepos[repo.name] = check.checked;
+      drawApps();
+    };
+
+    div.appendChild(label);
+    div.appendChild(check);
+    list.appendChild(div);
+  });
+}
+
+function drawApps() {
+  const appsDiv = document.getElementById("apps");
+  appsDiv.innerHTML = "";
+
+  repos.forEach(repo => {
+    if (!enabledRepos[repo.name]) return;
+
+    (repo.apps || []).forEach(app => {
+      const v = app.versions?.[0];
+      if (!v) return;
+
+      const appDiv = document.createElement("div");
+      appDiv.className = "app";
+
+      const img = document.createElement("img");
+      img.src = app.icon || "";
+      img.onerror = () => img.style.display = "none";
+
+      const info = document.createElement("div");
+      info.className = "info";
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = app.name;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent =
+        `Repo: ${repo.name} / Ver: ${v.version || "?"} / 更新日: ${v.date || v.versionDate || "不明"}`;
+
+      const desc = document.createElement("div");
+      desc.className = "desc";
+      desc.textContent = v.description || "";
+
+      info.appendChild(name);
+      info.appendChild(meta);
+      info.appendChild(desc);
+
+      const btn = document.createElement("button");
+      btn.className = "get";
+      btn.textContent = "GET";
+      btn.onclick = () => location.href = v.downloadURL;
+
+      appDiv.appendChild(img);
+      appDiv.appendChild(info);
+      appDiv.appendChild(btn);
+
+      appsDiv.appendChild(appDiv);
+    });
+  });
+
+  if (!appsDiv.innerHTML) {
+    appsDiv.textContent = "表示するアプリ無いで";
+  }
+}
+</script>
+</body>
+</html>
