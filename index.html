@@ -34,6 +34,11 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 
 /* JSON Viewer */
 #jsonViewer { white-space:pre-wrap; background:#eee; padding:10px; border-radius:8px; margin-top:10px; max-height:300px; overflow:auto; }
+
+/* Progress Bar */
+#progressContainer { width:100%; background:#ddd; border-radius:5px; margin-bottom:15px; display:none; }
+#progressBar { width:0%; height:15px; background:#007bff; border-radius:5px; }
+#loadingText { margin-bottom:5px; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -52,6 +57,8 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 </div>
 
 <div class="container">
+<div id="loadingText">Loading JSON...</div>
+<div id="progressContainer"><div id="progressBar"></div></div>
 <div id="error"></div>
 <div id="apps"></div>
 </div>
@@ -247,27 +254,42 @@ function showSourceURL(app, url){
   modal.style.display='flex';
 }
 
-// Fetch repos
+// Fetch repos with progress
 async function fetchRepos(){
   reposData=[];
   let success=false;
   let errorMessages=[];
-  for(const url of repoUrls){
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const loadingText = document.getElementById('loadingText');
+
+  progressContainer.style.display='block';
+  progressBar.style.width='0%';
+  loadingText.textContent='Loading JSON...';
+
+  for(let i=0;i<repoUrls.length;i++){
+    const url = repoUrls[i];
     try{
-      const res=await fetch(corsProxy+url);
+      const res = await fetch(corsProxy+url);
       if(!res.ok){
         errorMessages.push(`Failed to fetch: ${url} (status ${res.status})`);
         continue;
       }
-      const data=await res.json();
-      data.originalUrl=url; // save original JSON URL
+      const data = await res.json();
+      data.originalUrl = url;
       reposData.push(data);
       success=true;
     }catch(e){
       console.error('Error fetching:',url,e);
       errorMessages.push(`Error fetching: ${url}\n${e.message}`);
     }
+    // update progress
+    const percent = Math.round(((i+1)/repoUrls.length)*100);
+    progressBar.style.width = percent+'%';
   }
+
+  progressContainer.style.display='none';
+  loadingText.textContent='';
 
   const errorDiv=document.getElementById('error');
   if(!success){ errorDiv.textContent="Failed to load JSON.\n"+errorMessages.join("\n"); }
