@@ -2,211 +2,112 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repo Store</title>
-
+<title>AltStore風ストア</title>
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f2f2f7;
-}
-
-header {
-  background: #fff;
-  padding: 14px;
-  font-size: 20px;
-  font-weight: bold;
-  border-bottom: 1px solid #ddd;
-}
-
-#container {
-  display: flex;
-}
-
-#repos {
-  width: 220px;
-  background: #fff;
-  border-right: 1px solid #ddd;
-  padding: 10px;
-}
-
-.repo {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.repo input {
-  transform: scale(1.2);
-}
-
-#apps {
-  flex: 1;
-  padding: 10px;
-}
-
-.app {
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.app img {
-  width: 64px;
-  height: 64px;
-  border-radius: 14px;
-  margin-right: 14px;
-}
-
-.info {
-  flex: 1;
-}
-
-.name {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.meta {
-  font-size: 13px;
-  color: #666;
-}
-
-.desc {
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-.get {
-  background: #007aff;
-  color: #fff;
-  border: none;
-  border-radius: 16px;
-  padding: 6px 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
+body { font-family: sans-serif; background:#f5f5f5; color:#222; margin:0; padding:0;}
+header { background:#222; color:#fff; padding:10px 20px; }
+h1 { margin:0; font-size:1.5em; }
+.container { padding:20px; }
+.repo-toggle { margin-bottom:10px; }
+.repo-toggle label { margin-right:15px; cursor:pointer; }
+.app { background:#fff; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.app h2 { margin:0 0 5px 0; font-size:1.2em;}
+.app .meta { font-size:0.9em; color:#555; margin-bottom:5px;}
+button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
+button:hover { background:#0056b3;}
 </style>
 </head>
-
 <body>
-<header>Repo Store</header>
-
-<div id="container">
-  <div id="repos">
-    <b>Repo管理</b>
-    <div id="repoList">読み込み中…</div>
-  </div>
-  <div id="apps"></div>
+<header>
+<h1>AltStore風ストア</h1>
+</header>
+<div class="container">
+<div id="repoToggles" class="repo-toggle"></div>
+<div id="apps"></div>
 </div>
-
 <script>
+// Workers URL修正版
 const repoUrls = [
-  "https://cors.isomorphic-git.org/https://raw.githubusercontent.com/USER/REPO/main/source.json"
-  // ここに好きなrepo追加
+  "https://ipa-store.kotaaaaaaaa12.workers.dev/?url=https://raw.githubusercontent.com/USER/REPO/main/source.json",
+  "https://ipa-store.kotaaaaaaaa12.workers.dev/?url=https://example.com/source.json"
 ];
 
-let repos = [];
+let reposData = [];
 let enabledRepos = {};
 
-Promise.all(
-  repoUrls.map(url =>
-    fetch(url).then(r => r.json())
-  )
-).then(data => {
-  repos = data;
-  data.forEach(r => enabledRepos[r.name] = true);
-  drawRepoList();
-  drawApps();
-}).catch(() => {
-  document.getElementById("apps").textContent = "repo読み込み失敗や";
-});
-
-function drawRepoList() {
-  const list = document.getElementById("repoList");
-  list.innerHTML = "";
-  repos.forEach(repo => {
-    const div = document.createElement("div");
-    div.className = "repo";
-
-    const label = document.createElement("span");
-    label.textContent = repo.name || "Unknown";
-
-    const check = document.createElement("input");
-    check.type = "checkbox";
-    check.checked = enabledRepos[repo.name];
-    check.onchange = () => {
-      enabledRepos[repo.name] = check.checked;
-      drawApps();
-    };
-
-    div.appendChild(label);
-    div.appendChild(check);
-    list.appendChild(div);
+// repo管理チェックボックス作成
+function createRepoToggles() {
+  const container = document.getElementById('repoToggles');
+  container.innerHTML = '';
+  reposData.forEach(repo => {
+    const id = repo.name || repo.identifier || "unknown";
+    enabledRepos[id] = true;
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.onchange = () => { enabledRepos[id] = cb.checked; renderApps(); };
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + id));
+    container.appendChild(label);
   });
 }
 
-function drawApps() {
-  const appsDiv = document.getElementById("apps");
-  appsDiv.innerHTML = "";
+// アプリ描画
+function renderApps() {
+  const appsDiv = document.getElementById('apps');
+  appsDiv.innerHTML = '';
+  reposData.forEach(repo => {
+    const repoId = repo.name || repo.identifier || "unknown";
+    if(!enabledRepos[repoId]) return;
 
-  repos.forEach(repo => {
-    if (!enabledRepos[repo.name]) return;
+    const apps = Array.isArray(repo.apps) ? repo.apps : Object.values(repo.apps || {});
+    apps.forEach(app => {
+      const versionsArr = Array.isArray(app.versions) ? app.versions : Object.values(app.versions || {});
+      const latest = versionsArr[0];
+      if(!latest) return;
 
-    (repo.apps || []).forEach(app => {
-      const v = app.versions?.[0];
-      if (!v) return;
+      const appDiv = document.createElement('div');
+      appDiv.className = 'app';
+      const title = document.createElement('h2');
+      title.textContent = app.name || app.bundleIdentifier || "Unknown App";
+      appDiv.appendChild(title);
 
-      const appDiv = document.createElement("div");
-      appDiv.className = "app";
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = `Version: ${latest.version || 'N/A'} | Updated: ${latest.date || 'N/A'} | Repo: ${repoId}`;
+      appDiv.appendChild(meta);
 
-      const img = document.createElement("img");
-      img.src = app.icon || "";
-      img.onerror = () => img.style.display = "none";
-
-      const info = document.createElement("div");
-      info.className = "info";
-
-      const name = document.createElement("div");
-      name.className = "name";
-      name.textContent = app.name;
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent =
-        `Repo: ${repo.name} / Ver: ${v.version || "?"} / 更新日: ${v.date || v.versionDate || "不明"}`;
-
-      const desc = document.createElement("div");
-      desc.className = "desc";
-      desc.textContent = v.description || "";
-
-      info.appendChild(name);
-      info.appendChild(meta);
-      info.appendChild(desc);
-
-      const btn = document.createElement("button");
-      btn.className = "get";
-      btn.textContent = "GET";
-      btn.onclick = () => location.href = v.downloadURL;
-
-      appDiv.appendChild(img);
-      appDiv.appendChild(info);
-      appDiv.appendChild(btn);
+      if(latest.ipa) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Download IPA';
+        btn.onclick = () => { window.open(latest.ipa, '_blank'); };
+        appDiv.appendChild(btn);
+      }
 
       appsDiv.appendChild(appDiv);
     });
   });
-
-  if (!appsDiv.innerHTML) {
-    appsDiv.textContent = "表示するアプリ無いで";
-  }
 }
+
+// JSONフェッチ
+async function fetchRepos() {
+  reposData = [];
+  for(const url of repoUrls) {
+    try {
+      const res = await fetch(url);
+      if(!res.ok) { console.error('Failed to fetch:', url); continue; }
+      const data = await res.json();
+      reposData.push(data);
+    } catch(e) {
+      console.error('Error fetching:', url, e);
+    }
+  }
+  createRepoToggles();
+  renderApps();
+}
+
+fetchRepos();
 </script>
 </body>
 </html>
