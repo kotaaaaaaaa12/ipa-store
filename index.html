@@ -16,7 +16,7 @@ h1 { margin:0; font-size:1.5em; }
 button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
 button:hover { background:#0056b3;}
 input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
-#error { color:red; font-weight:bold; margin-bottom:15px; }
+#error { color:red; font-weight:bold; margin-bottom:15px; white-space: pre-wrap;}
 </style>
 </head>
 <body>
@@ -32,7 +32,7 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 <div id="apps"></div>
 </div>
 <script>
-// Cloudflare Pages 前提 raw URL
+// JSON URL は1個だけ
 const repoUrls = [
   "https://ipa.cypwn.xyz/cypwn.json"
 ];
@@ -99,23 +99,30 @@ function renderApps() {
 async function fetchRepos() {
   reposData = [];
   let success = false;
+  let errorMessages = [];
   for(const url of repoUrls) {
     try {
       const res = await fetch(url);
-      if(!res.ok) { console.error('Failed to fetch:', url); continue; }
+      if(!res.ok) { 
+        errorMessages.push(`Failed to fetch: ${url} (status ${res.status})`);
+        continue;
+      }
       const data = await res.json();
       reposData.push(data);
       success = true;
     } catch(e) {
       console.error('Error fetching:', url, e);
+      errorMessages.push(`Error fetching: ${url}\n${e.message}`);
     }
   }
+
   const errorDiv = document.getElementById('error');
   if(!success) {
-    errorDiv.textContent = "JSONを読み込めませんでした。";
+    errorDiv.textContent = "JSONを読み込めませんでした。\n" + errorMessages.join("\n");
   } else {
     errorDiv.textContent = "";
   }
+
   createRepoToggles();
   renderApps();
 }
