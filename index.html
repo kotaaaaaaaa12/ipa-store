@@ -10,9 +10,11 @@ h1 { margin:0; font-size:1.5em; }
 .container { padding:20px; }
 .repo-toggle, .search-box { margin-bottom:15px; }
 .repo-toggle label { margin-right:15px; cursor:pointer; }
-.app { background:#fff; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.2);}
-.app h2 { margin:0 0 5px 0; font-size:1.2em;}
-.app .meta { font-size:0.9em; color:#555; margin-bottom:5px;}
+.app { display:flex; align-items:center; background:#fff; padding:10px 15px; margin-bottom:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.app img { width:60px; height:60px; border-radius:12px; margin-right:15px; object-fit:cover; }
+.app .info { flex:1; }
+.app .info h2 { margin:0 0 5px 0; font-size:1.2em; }
+.app .meta { font-size:0.9em; color:#555; }
 button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
 button:hover { background:#0056b3;}
 input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
@@ -32,7 +34,6 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 <div id="apps"></div>
 </div>
 <script>
-// JSON URL は1個だけ
 const repoUrls = [
   "https://corsproxy.io/?url=https://ipa.cypwn.xyz/cypwn.json"
 ];
@@ -69,25 +70,34 @@ function renderApps() {
     apps.forEach(app => {
       if(searchTerm && !(app.name && app.name.toLowerCase().includes(searchTerm))) return;
 
-      const versionsArr = Array.isArray(app.versions) ? app.versions : Object.values(app.versions || {});
-      const latest = versionsArr[0];
-      if(!latest) return;
-
       const appDiv = document.createElement('div');
       appDiv.className = 'app';
+
+      // アイコン
+      const img = document.createElement('img');
+      img.src = app.iconURL || '';
+      img.alt = app.name || 'app icon';
+      appDiv.appendChild(img);
+
+      // info
+      const info = document.createElement('div');
+      info.className = 'info';
       const title = document.createElement('h2');
-      title.textContent = app.name || app.bundleIdentifier || "Unknown App";
-      appDiv.appendChild(title);
+      title.textContent = app.name || app.bundleIdentifier || 'Unknown App';
+      info.appendChild(title);
 
       const meta = document.createElement('div');
       meta.className = 'meta';
-      meta.textContent = `Version: ${latest.version || 'N/A'} | Updated: ${latest.date || 'N/A'} | Repo: ${repoId}`;
-      appDiv.appendChild(meta);
+      meta.textContent = `Version: ${app.version || 'N/A'} | Updated: ${app.versionDate || 'N/A'} | Developer: ${app.developerName || 'N/A'}`;
+      info.appendChild(meta);
 
-      if(latest.ipa) {
+      appDiv.appendChild(info);
+
+      // ダウンロードボタン
+      if(app.downloadURL) {
         const btn = document.createElement('button');
         btn.textContent = 'Download IPA';
-        btn.onclick = () => { window.open(latest.ipa, '_blank'); };
+        btn.onclick = () => { window.open(app.downloadURL, '_blank'); };
         appDiv.appendChild(btn);
       }
 
