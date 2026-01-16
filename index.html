@@ -56,7 +56,7 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 <div id="apps"></div>
 </div>
 
-<!-- Modal for app details -->
+<!-- Modal for app details / JSON -->
 <div id="modal" class="modal">
 <div class="modal-content">
 <span id="modalClose" class="modal-close">✖</span>
@@ -70,12 +70,12 @@ const repoUrls = [
   "https://wuxu1.github.io/wuxu-complete.json",
   "https://wuxu1.github.io/wuxu-complete-plus.json",
   "https://quarksources.github.io/dist/quantumsource.min.json"
-  // add more if needed
 ];
 
 const corsProxy = "https://corsproxy.io/?url=";
 let reposData = [];
 let enabledRepos = {};
+let repoUrlMap = {}; // repo data => original URL
 
 // Sidebar open/close
 function openSidebar(){ document.getElementById('sidebar').style.width='300px'; document.querySelector('.container').style.marginLeft='300px'; }
@@ -85,7 +85,7 @@ function closeSidebar(){ document.getElementById('sidebar').style.width='0'; doc
 function createRepoToggles() {
   const container = document.getElementById('repoToggles');
   container.innerHTML = '';
-  reposData.forEach(repo=>{
+  reposData.forEach((repo, idx)=>{
     const id = repo.name || repo.identifier || "unknown";
     enabledRepos[id] = true;
     const label = document.createElement('label');
@@ -96,6 +96,9 @@ function createRepoToggles() {
     label.appendChild(cb);
     label.appendChild(document.createTextNode(' ' + id));
     container.appendChild(label);
+
+    // Map repo object to its URL
+    repoUrlMap[repo] = repo.originalUrl || repoUrls[idx];
   });
 }
 
@@ -146,10 +149,10 @@ function renderApps() {
         appDiv.appendChild(btnDetail);
       }
 
-      // Source JSON button
+      // Source URL button
       const btnSource=document.createElement('button');
       btnSource.textContent='Source';
-      btnSource.onclick=()=>showSourceJSON(app);
+      btnSource.onclick=()=>showSourceURL(repo);
       appDiv.appendChild(btnSource);
 
       appsDiv.appendChild(appDiv);
@@ -179,18 +182,22 @@ function openModal(app){
   modal.style.display='flex';
 }
 
-// Show source JSON without proxy
-function showSourceJSON(app){
+// Show original JSON URL for copying
+function showSourceURL(repo){
   modalBody.innerHTML='';
-  let jsonStr = JSON.stringify(app, null, 2);
+  const url = repoUrlMap[repo];
+  const info = document.createElement('p');
+  info.textContent="Original JSON URL for this repo:";
+  modalBody.appendChild(info);
+
   const pre = document.createElement('pre');
   pre.id='jsonViewer';
-  pre.textContent=jsonStr;
+  pre.textContent = url;
   modalBody.appendChild(pre);
 
-  const copyBtn=document.createElement('button');
-  copyBtn.textContent='Copy JSON';
-  copyBtn.onclick=()=>{ navigator.clipboard.writeText(jsonStr); alert('Copied!'); };
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent='Copy URL';
+  copyBtn.onclick = ()=>{ navigator.clipboard.writeText(url); alert('Copied!'); };
   modalBody.appendChild(copyBtn);
 
   modal.style.display='flex';
@@ -201,7 +208,8 @@ async function fetchRepos(){
   reposData=[];
   let success=false;
   let errorMessages=[];
-  for(const url of repoUrls){
+  for(let i=0;i<repoUrls.length;i++){
+    const url=repoUrls[i];
     try{
       const res=await fetch(corsProxy+url);
       if(!res.ok){
@@ -209,6 +217,7 @@ async function fetchRepos(){
         continue;
       }
       const data=await res.json();
+      data.originalUrl=url; // keep original URL
       reposData.push(data);
       success=true;
     }catch(e){
