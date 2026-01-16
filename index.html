@@ -22,7 +22,7 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 /* Modal */
 .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
 .modal-content { background:#fff; padding:20px; border-radius:10px; max-width:600px; max-height:80%; overflow:auto; }
-.modal img { max-width:500px; height:auto; margin-bottom:10px; border-radius:8px; display:block; }
+.modal img { max-width:500px; width:500px; height:auto; margin-bottom:10px; border-radius:8px; display:block; }
 .modal-close { float:right; cursor:pointer; font-weight:bold; color:#333; }
 
 /* Sidebar menu */
@@ -66,49 +66,49 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 
 <script>
 const repoUrls = [
-  "https://ipa.cypwn.xyz/cypwn.json",
-  "https://wuxu1.github.io/wuxu-complete.json",
-  "https://wuxu1.github.io/wuxu-complete-plus.json",
-  "https://quarksources.github.io/dist/quantumsource.min.json",
-  "https://quarksources.github.io/dist/quantumsource%2B%2B.min.json",
-  "https://community-apps.sidestore.io/sidecommunity.json",
-  "https://raw.githubusercontent.com/LiveContainer/LiveContainer/refs/heads/main/apps.json",
-  "https://github.com/LiveContainer/LiveContainer/releases/download/nightly/apps_nightly.json",
-  "https://stikdebug.xyz/index.json",
-  "https://raw.githubusercontent.com/MaxCrazy1101/MeloNXStoreSource/refs/heads/main/MeloNX.json",
-  "https://provenance-emu.com/apps.json",
-  "https://neoarz.github.io/Countdown-App/Countdown.json",
-  "https://altstore.oatmealdome.me/",
-  "https://alt.getutm.app/",
-  "https://theodyssey.dev/altstore/odysseysource.json",
-  "https://repos.yattee.stream/alt/apps.json",
-  "https://cdn.altstore.io/file/altstore/marketplace.json",
-  "https://i.cizzuk.net/altstore/source.pal.json",
-  "https://eichi.yyyywaiwai.com/source.json",
-  "https://raw.githubusercontent.com/totallynotharry/epic-games-altstore/refs/heads/main/source.json",
-  "https://app.bmverse.bruu.eu/",
-  "https://appfair.net/altstore.json",
-  "http://blissquake.net/AltStore/source",
-  "https://raw.githubusercontent.com/Michael-128/qBitControl-releases/main/source.json",
-  "https://altstore.getnickel.site/",
-  "https://partyknights.app/source",
-  "https://esound.app/downloads/source.json",
-  "https://polymorph-distribution.netlify.app/source.json",
-  "https://raw.githubusercontent.com/RajnishOne/qbitconnect-releases/main/altstore-pal.json",
-  "https://cdn.squadblast.com/market/marketplace.json",
-  "https://weztling.se/altstore.json",
-  "https://alt.hackerwebapp.com/PALSource.json",
-  "https://courtpredict-ios.web.app/PALSource.json",
-  "https://xitrix.github.io/iTorrent/AltStoreEU.json",
-  "https://altstore.nuumi.io/source.json",
-  "https://vvpapps.b-cdn.net/source.json",
-  "https://bringyour.com/altstore/source.json",
-  "https://www.cranci.tech/PAL.json",
-  "https://alt.stux.me/repo.json",
-  "https://peopledrop.app/apps.json",
-  "https://adp.salupovteam.com/altrepo.json",
-  "https://alt.mexc.co/",
-  "https://raw.githubusercontent.com/cbruegg/altstore-source/refs/heads/main/source.json"
+"https://ipa.cypwn.xyz/cypwn.json",
+"https://wuxu1.github.io/wuxu-complete.json",
+"https://wuxu1.github.io/wuxu-complete-plus.json",
+"https://quarksources.github.io/dist/quantumsource.min.json",
+"https://quarksources.github.io/dist/quantumsource%2B%2B.min.json",
+"https://community-apps.sidestore.io/sidecommunity.json",
+"https://raw.githubusercontent.com/LiveContainer/LiveContainer/refs/heads/main/apps.json",
+"https://github.com/LiveContainer/LiveContainer/releases/download/nightly/apps_nightly.json",
+"https://stikdebug.xyz/index.json",
+"https://raw.githubusercontent.com/MaxCrazy1101/MeloNXStoreSource/refs/heads/main/MeloNX.json",
+"https://provenance-emu.com/apps.json",
+"https://neoarz.github.io/Countdown-App/Countdown.json",
+"https://altstore.oatmealdome.me/",
+"https://alt.getutm.app/",
+"https://theodyssey.dev/altstore/odysseysource.json",
+"https://repos.yattee.stream/alt/apps.json",
+"https://cdn.altstore.io/file/altstore/marketplace.json",
+"https://i.cizzuk.net/altstore/source.pal.json",
+"https://eichi.yyyywaiwai.com/source.json",
+"https://raw.githubusercontent.com/totallynotharry/epic-games-altstore/refs/heads/main/source.json",
+"https://app.bmverse.bruu.eu/",
+"https://appfair.net/altstore.json",
+"http://blissquake.net/AltStore/source",
+"https://raw.githubusercontent.com/Michael-128/qBitControl-releases/main/source.json",
+"https://altstore.getnickel.site/",
+"https://partyknights.app/source",
+"https://esound.app/downloads/source.json",
+"https://polymorph-distribution.netlify.app/source.json",
+"https://raw.githubusercontent.com/RajnishOne/qbitconnect-releases/main/altstore-pal.json",
+"https://cdn.squadblast.com/market/marketplace.json",
+"https://weztling.se/altstore.json",
+"https://alt.hackerwebapp.com/PALSource.json",
+"https://courtpredict-ios.web.app/PALSource.json",
+"https://xitrix.github.io/iTorrent/AltStoreEU.json",
+"https://altstore.nuumi.io/source.json",
+"https://vvpapps.b-cdn.net/source.json",
+"https://bringyour.com/altstore/source.json",
+"https://www.cranci.tech/PAL.json",
+"https://alt.stux.me/repo.json",
+"https://peopledrop.app/apps.json",
+"https://adp.salupovteam.com/altrepo.json",
+"https://alt.mexc.co/",
+"https://raw.githubusercontent.com/cbruegg/altstore-source/refs/heads/main/source.json"
 ];
 
 const corsProxy = "https://cors-proxy.kotaaaaaaaa12.workers.dev/corsproxy/?apiurl=";
@@ -123,7 +123,7 @@ function closeSidebar(){ document.getElementById('sidebar').style.width='0'; doc
 function createRepoToggles() {
   const container = document.getElementById('repoToggles');
   container.innerHTML = '';
-  reposData.forEach((repo, idx)=>{
+  reposData.forEach((repo)=>{
     const id = repo.name || repo.identifier || "unknown";
     enabledRepos[id] = true;
     const label = document.createElement('label');
@@ -170,7 +170,7 @@ function renderApps() {
 
       appDiv.appendChild(info);
 
-      // Download IPA button (direct URL)
+      // Download IPA
       if(app.downloadURL){
         const btn=document.createElement('button');
         btn.textContent='Download IPA';
@@ -215,14 +215,13 @@ function openModal(app){
     app.screenshotURLs.forEach(url=>{
       const img=document.createElement('img');
       img.src=corsProxy+url;
-      img.style.width='500px'; // 固定幅
       modalBody.appendChild(img);
     });
   }
   modal.style.display='flex';
 }
 
-// Show Source URL & AltStore PAL button
+// Show Source URL & AltStore PAL
 function showSourceURL(app, url){
   modalBody.innerHTML='';
 
@@ -253,8 +252,7 @@ async function fetchRepos(){
   reposData=[];
   let success=false;
   let errorMessages=[];
-  for(let i=0;i<repoUrls.length;i++){
-    const url=repoUrls[i];
+  for(const url of repoUrls){
     try{
       const res=await fetch(corsProxy+url);
       if(!res.ok){
