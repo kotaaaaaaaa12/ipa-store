@@ -16,6 +16,7 @@ h1 { margin:0; font-size:1.5em; }
 button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
 button:hover { background:#0056b3;}
 input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
+#error { color:red; font-weight:bold; margin-bottom:15px; }
 </style>
 </head>
 <body>
@@ -26,11 +27,12 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 </div>
 </header>
 <div class="container">
+<div id="error"></div>
 <div id="repoToggles" class="repo-toggle"></div>
 <div id="apps"></div>
 </div>
 <script>
-// ここに raw URL を複数置け（Cloudflare Pages前提）
+// Cloudflare Pages 前提 raw URL
 const repoUrls = [
   "https://ipa.cypwn.xyz/cypwn.json",
   "https://example.com/source.json"
@@ -39,7 +41,6 @@ const repoUrls = [
 let reposData = [];
 let enabledRepos = {};
 
-// repo管理チェックボックス作成
 function createRepoToggles() {
   const container = document.getElementById('repoToggles');
   container.innerHTML = '';
@@ -57,7 +58,6 @@ function createRepoToggles() {
   });
 }
 
-// アプリ描画
 function renderApps() {
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
   const appsDiv = document.getElementById('apps');
@@ -97,24 +97,30 @@ function renderApps() {
   });
 }
 
-// JSONフェッチ
 async function fetchRepos() {
   reposData = [];
+  let success = false;
   for(const url of repoUrls) {
     try {
       const res = await fetch(url);
       if(!res.ok) { console.error('Failed to fetch:', url); continue; }
       const data = await res.json();
       reposData.push(data);
+      success = true;
     } catch(e) {
       console.error('Error fetching:', url, e);
     }
+  }
+  const errorDiv = document.getElementById('error');
+  if(!success) {
+    errorDiv.textContent = "JSONを読み込めませんでした。";
+  } else {
+    errorDiv.textContent = "";
   }
   createRepoToggles();
   renderApps();
 }
 
-// 検索イベント
 document.getElementById('searchInput').addEventListener('input', renderApps);
 
 fetchRepos();
