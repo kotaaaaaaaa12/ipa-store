@@ -5,7 +5,7 @@
 <title>AltStore風ストア</title>
 <style>
 body { font-family: sans-serif; background:#f5f5f5; color:#222; margin:0; padding:0;}
-header { background:#222; color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between;}
+header { background:#222; color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;}
 h1 { margin:0; font-size:1.5em; }
 .container { padding:20px; }
 .repo-toggle, .search-box { margin-bottom:15px; }
@@ -14,11 +14,15 @@ h1 { margin:0; font-size:1.5em; }
 .app img { width:60px; height:60px; border-radius:12px; margin-right:15px; object-fit:cover; }
 .app .info { flex:1; }
 .app .info h2 { margin:0 0 5px 0; font-size:1.2em; }
-.app .meta { font-size:0.9em; color:#555; }
-button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
-button:hover { background:#0056b3;}
+.app .meta { font-size:0.9em; color:#555; margin-bottom:5px; }
+button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; margin-right:5px; }
+button:hover { background:#0056b3; }
 input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
-#error { color:red; font-weight:bold; margin-bottom:15px; white-space: pre-wrap;}
+#error { color:red; font-weight:bold; margin-bottom:15px; white-space: pre-wrap; }
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:#fff; padding:20px; border-radius:10px; max-width:600px; max-height:80%; overflow:auto; }
+.modal img { max-width:100%; margin-bottom:10px; border-radius:8px; }
+.modal-close { float:right; cursor:pointer; font-weight:bold; color:#333; }
 </style>
 </head>
 <body>
@@ -33,14 +37,25 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 <div id="repoToggles" class="repo-toggle"></div>
 <div id="apps"></div>
 </div>
+
+<!-- モーダル -->
+<div id="modal" class="modal">
+<div class="modal-content">
+<span id="modalClose" class="modal-close">✖</span>
+<div id="modalBody"></div>
+</div>
+</div>
+
 <script>
 const repoUrls = [
-  "https://corsproxy.io/?url=https://ipa.cypwn.xyz/cypwn.json"
+  "https://ipa.cypwn.xyz/cypwn.json"
 ];
 
+const corsProxy = "https://corsproxy.io/?url=";
 let reposData = [];
 let enabledRepos = {};
 
+// repo ON/OFF
 function createRepoToggles() {
   const container = document.getElementById('repoToggles');
   container.innerHTML = '';
@@ -58,6 +73,7 @@ function createRepoToggles() {
   });
 }
 
+// アプリ描画
 function renderApps() {
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
   const appsDiv = document.getElementById('apps');
@@ -73,13 +89,11 @@ function renderApps() {
       const appDiv = document.createElement('div');
       appDiv.className = 'app';
 
-      // アイコン
       const img = document.createElement('img');
-      img.src = app.iconURL || '';
+      img.src = app.iconURL ? corsProxy + app.iconURL : '';
       img.alt = app.name || 'app icon';
       appDiv.appendChild(img);
 
-      // info
       const info = document.createElement('div');
       info.className = 'info';
       const title = document.createElement('h2');
@@ -93,12 +107,19 @@ function renderApps() {
 
       appDiv.appendChild(info);
 
-      // ダウンロードボタン
-      if(app.downloadURL) {
+      // ボタン群
+      if(app.downloadURL){
         const btn = document.createElement('button');
         btn.textContent = 'Download IPA';
-        btn.onclick = () => { window.open(app.downloadURL, '_blank'); };
+        btn.onclick = () => window.open(corsProxy + app.downloadURL, '_blank');
         appDiv.appendChild(btn);
+      }
+
+      if(app.localizedDescription || (app.screenshotURLs && app.screenshotURLs.length)){
+        const btnDetail = document.createElement('button');
+        btnDetail.textContent = '詳細';
+        btnDetail.onclick = () => openModal(app);
+        appDiv.appendChild(btnDetail);
       }
 
       appsDiv.appendChild(appDiv);
@@ -106,28 +127,51 @@ function renderApps() {
   });
 }
 
+// モーダル制御
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modalBody');
+document.getElementById('modalClose').onclick = () => { modal.style.display='none'; };
+
+function openModal(app){
+  modalBody.innerHTML = '';
+  if(app.localizedDescription){
+    const p = document.createElement('p');
+    p.textContent = app.localizedDescription;
+    modalBody.appendChild(p);
+  }
+  if(app.screenshotURLs && app.screenshotURLs.length){
+    app.screenshotURLs.forEach(url=>{
+      const img = document.createElement('img');
+      img.src = corsProxy + url;
+      modalBody.appendChild(img);
+    });
+  }
+  modal.style.display = 'flex';
+}
+
+// JSON fetch
 async function fetchRepos() {
   reposData = [];
   let success = false;
   let errorMessages = [];
-  for(const url of repoUrls) {
-    try {
-      const res = await fetch(url);
-      if(!res.ok) { 
+  for(const url of repoUrls){
+    try{
+      const res = await fetch(corsProxy + url);
+      if(!res.ok){
         errorMessages.push(`Failed to fetch: ${url} (status ${res.status})`);
         continue;
       }
       const data = await res.json();
       reposData.push(data);
       success = true;
-    } catch(e) {
+    } catch(e){
       console.error('Error fetching:', url, e);
       errorMessages.push(`Error fetching: ${url}\n${e.message}`);
     }
   }
 
   const errorDiv = document.getElementById('error');
-  if(!success) {
+  if(!success){
     errorDiv.textContent = "JSONを読み込めませんでした。\n" + errorMessages.join("\n");
   } else {
     errorDiv.textContent = "";
@@ -138,7 +182,6 @@ async function fetchRepos() {
 }
 
 document.getElementById('searchInput').addEventListener('input', renderApps);
-
 fetchRepos();
 </script>
 </body>
