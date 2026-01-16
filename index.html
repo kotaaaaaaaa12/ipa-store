@@ -251,7 +251,7 @@ async function fetchRepos(){
   let errorMessages=[];
   for(const url of repoUrls){
     try{
-      const res=await fetch(corsProxy + url);
+      const res = await fetch(corsProxy + encodeURIComponent(url));
       if(!res.ok){
         errorMessages.push(`Failed to fetch: ${url} (status ${res.status})`);
         continue;
