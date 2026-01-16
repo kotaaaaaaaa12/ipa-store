@@ -5,31 +5,35 @@
 <title>AltStore風ストア</title>
 <style>
 body { font-family: sans-serif; background:#f5f5f5; color:#222; margin:0; padding:0;}
-header { background:#222; color:#fff; padding:10px 20px; }
+header { background:#222; color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between;}
 h1 { margin:0; font-size:1.5em; }
 .container { padding:20px; }
-.repo-toggle { margin-bottom:10px; }
+.repo-toggle, .search-box { margin-bottom:15px; }
 .repo-toggle label { margin-right:15px; cursor:pointer; }
 .app { background:#fff; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.2);}
 .app h2 { margin:0 0 5px 0; font-size:1.2em;}
 .app .meta { font-size:0.9em; color:#555; margin-bottom:5px;}
 button { padding:5px 10px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer;}
 button:hover { background:#0056b3;}
+input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; width:250px;}
 </style>
 </head>
 <body>
 <header>
 <h1>AltStore風ストア</h1>
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="アプリ名で検索">
+</div>
 </header>
 <div class="container">
 <div id="repoToggles" class="repo-toggle"></div>
 <div id="apps"></div>
 </div>
 <script>
-// Workers URL修正版
+// ここに raw URL を複数置け（Cloudflare Pages前提）
 const repoUrls = [
-  "https://ipa-store.kotaaaaaaaa12.workers.dev/?url=https://raw.githubusercontent.com/USER/REPO/main/source.json",
-  "https://ipa-store.kotaaaaaaaa12.workers.dev/?url=https://example.com/source.json"
+  "https://raw.githubusercontent.com/USER/REPO/main/source.json",
+  "https://example.com/source.json"
 ];
 
 let reposData = [];
@@ -55,6 +59,7 @@ function createRepoToggles() {
 
 // アプリ描画
 function renderApps() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
   const appsDiv = document.getElementById('apps');
   appsDiv.innerHTML = '';
   reposData.forEach(repo => {
@@ -63,6 +68,8 @@ function renderApps() {
 
     const apps = Array.isArray(repo.apps) ? repo.apps : Object.values(repo.apps || {});
     apps.forEach(app => {
+      if(searchTerm && !(app.name && app.name.toLowerCase().includes(searchTerm))) return;
+
       const versionsArr = Array.isArray(app.versions) ? app.versions : Object.values(app.versions || {});
       const latest = versionsArr[0];
       if(!latest) return;
@@ -106,6 +113,9 @@ async function fetchRepos() {
   createRepoToggles();
   renderApps();
 }
+
+// 検索イベント
+document.getElementById('searchInput').addEventListener('input', renderApps);
 
 fetchRepos();
 </script>
