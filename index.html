@@ -56,7 +56,7 @@ input[type="text"] { padding:5px 8px; border-radius:5px; border:1px solid #ccc; 
 <div id="apps"></div>
 </div>
 
-<!-- Modal for app details / JSON -->
+<!-- Modal -->
 <div id="modal" class="modal">
 <div class="modal-content">
 <span id="modalClose" class="modal-close">✖</span>
@@ -69,52 +69,12 @@ const repoUrls = [
   "https://ipa.cypwn.xyz/cypwn.json",
   "https://wuxu1.github.io/wuxu-complete.json",
   "https://wuxu1.github.io/wuxu-complete-plus.json",
-  "https://quarksources.github.io/dist/quantumsource.min.json",
-  "https://quarksources.github.io/dist/quantumsource%2B%2B.min.json",
-  "https://community-apps.sidestore.io/sidecommunity.json",
-  "https://raw.githubusercontent.com/LiveContainer/LiveContainer/refs/heads/main/apps.json",
-  "https://github.com/LiveContainer/LiveContainer/releases/download/nightly/apps_nightly.json",
-  "https://stikdebug.xyz/index.json",
-  "https://raw.githubusercontent.com/MaxCrazy1101/MeloNXStoreSource/refs/heads/main/MeloNX.json",
-  "https://provenance-emu.com/apps.json",
-  "https://neoarz.github.io/Countdown-App/Countdown.json",
-  "https://altstore.oatmealdome.me/",
-  "https://alt.getutm.app/",
-  "https://theodyssey.dev/altstore/odysseysource.json",
-  "https://repos.yattee.stream/alt/apps.json",
-  "https://cdn.altstore.io/file/altstore/marketplace.json",
-  "https://i.cizzuk.net/altstore/source.pal.json",
-  "https://eichi.yyyywaiwai.com/source.json",
-  "https://raw.githubusercontent.com/totallynotharry/epic-games-altstore/refs/heads/main/source.json",
-  "https://app.bmverse.bruu.eu/",
-  "https://appfair.net/altstore.json",
-  "http://blissquake.net/AltStore/source",
-  "https://raw.githubusercontent.com/Michael-128/qBitControl-releases/main/source.json",
-  "https://altstore.getnickel.site/",
-  "https://partyknights.app/source",
-  "https://esound.app/downloads/source.json",
-  "https://polymorph-distribution.netlify.app/source.json",
-  "https://raw.githubusercontent.com/RajnishOne/qbitconnect-releases/main/altstore-pal.json",
-  "https://cdn.squadblast.com/market/marketplace.json",
-  "https://weztling.se/altstore.json",
-  "https://alt.hackerwebapp.com/PALSource.json",
-  "https://courtpredict-ios.web.app/PALSource.json",
-  "https://xitrix.github.io/iTorrent/AltStoreEU.json",
-  "https://altstore.nuumi.io/source.json",
-  "https://vvpapps.b-cdn.net/source.json",
-  "https://bringyour.com/altstore/source.json",
-  "https://www.cranci.tech/PAL.json",
-  "https://alt.stux.me/repo.json",
-  "https://peopledrop.app/apps.json",
-  "https://adp.salupovteam.com/altrepo.json",
-  "https://alt.mexc.co/",
-  "https://raw.githubusercontent.com/cbruegg/altstore-source/refs/heads/main/source.json"
+  "https://quarksources.github.io/dist/quantumsource.min.json"
 ];
 
 const corsProxy = "https://corsproxy.io/?url=";
 let reposData = [];
 let enabledRepos = {};
-let repoUrlMap = {}; // repo object → original URL
 
 // Sidebar open/close
 function openSidebar(){ document.getElementById('sidebar').style.width='300px'; document.querySelector('.container').style.marginLeft='300px'; }
@@ -135,8 +95,6 @@ function createRepoToggles() {
     label.appendChild(cb);
     label.appendChild(document.createTextNode(' ' + id));
     container.appendChild(label);
-
-    repoUrlMap[repo] = repo.originalUrl || repoUrls[idx];
   });
 }
 
@@ -148,9 +106,10 @@ function renderApps() {
   reposData.forEach(repo=>{
     const repoId = repo.name || repo.identifier || "unknown";
     if(!enabledRepos[repoId]) return;
-    const apps = Array.isArray(repo.apps) ? repo.apps : Object.values(repo.apps||{});
+    const apps = Array.isArray(repo.apps)?repo.apps:Object.values(repo.apps||{});
     apps.forEach(app=>{
       if(searchTerm && !(app.name && app.name.toLowerCase().includes(searchTerm))) return;
+
       const appDiv = document.createElement('div');
       appDiv.className='app';
 
@@ -172,14 +131,15 @@ function renderApps() {
 
       appDiv.appendChild(info);
 
-      // Buttons
+      // Download IPA button (direct URL)
       if(app.downloadURL){
         const btn=document.createElement('button');
         btn.textContent='Download IPA';
-        btn.onclick=()=>window.open(app.downloadURL,'_blank'); // ← proxy無し
+        btn.onclick=()=>window.open(app.downloadURL,'_blank');
         appDiv.appendChild(btn);
       }
 
+      // Details button
       if(app.localizedDescription || (app.screenshotURLs && app.screenshotURLs.length)){
         const btnDetail=document.createElement('button');
         btnDetail.textContent='Details';
@@ -187,11 +147,13 @@ function renderApps() {
         appDiv.appendChild(btnDetail);
       }
 
-      // Source URL button
-      const btnSource=document.createElement('button');
-      btnSource.textContent='Source';
-      btnSource.onclick=()=>showSourceURL(repo);
-      appDiv.appendChild(btnSource);
+      // Source button
+      if(repo.originalUrl || repoUrls.length){
+        const btnSource=document.createElement('button');
+        btnSource.textContent='Source';
+        btnSource.onclick=()=>showSourceURL(app, repo.originalUrl || repoUrls[0]);
+        appDiv.appendChild(btnSource);
+      }
 
       appsDiv.appendChild(appDiv);
     });
@@ -221,12 +183,12 @@ function openModal(app){
   modal.style.display='flex';
 }
 
-// Show original JSON URL for copying
-function showSourceURL(repo){
+// Show Source URL & AltStore PAL button
+function showSourceURL(app, url){
   modalBody.innerHTML='';
-  const url = repoUrlMap[repo];
+
   const info = document.createElement('p');
-  info.textContent="Original JSON URL for this repo:";
+  info.textContent="Original JSON URL for this app:";
   modalBody.appendChild(info);
 
   const pre = document.createElement('pre');
@@ -238,6 +200,11 @@ function showSourceURL(repo){
   copyBtn.textContent='Copy URL';
   copyBtn.onclick = ()=>{ navigator.clipboard.writeText(url); alert('Copied!'); };
   modalBody.appendChild(copyBtn);
+
+  const altstoreBtn = document.createElement('button');
+  altstoreBtn.textContent='Add to AltStore PAL';
+  altstoreBtn.onclick = ()=>{ window.open(`altstore-pal://source?url=${encodeURIComponent(url)}`,'_blank'); };
+  modalBody.appendChild(altstoreBtn);
 
   modal.style.display='flex';
 }
@@ -256,7 +223,7 @@ async function fetchRepos(){
         continue;
       }
       const data=await res.json();
-      data.originalUrl=url; // keep original URL
+      data.originalUrl=url; // save original JSON URL
       reposData.push(data);
       success=true;
     }catch(e){
